@@ -21,7 +21,6 @@ class KafkaConsumer {
     return await this.consumer.run({
       autoCommit: false,
       eachMessage: async ({ topic, partition, message }) => {
-        // const MAX_RETRIES = 3; Remova esta linha, pois já está definida no início do arquivo
 
         const prefix = `${topic}[${partition} | ${message.offset}] / ${message.timestamp}`;
         console.log(`- ${prefix} ${message.key}`);
@@ -42,7 +41,22 @@ class KafkaConsumer {
       },
     });
   }
+  async connect() {
+    await this.consumer.connect();
+    await this.consumer.subscribe({ topic: this.topic });
+    console.log(`${this.topic} Started to consume messages`);
+    this.connected = true; // Define o estado de conexão como verdadeiro após a conexão bem-sucedida
+  }
 
+  async disconnect() {
+    if (this.connected) {
+      await this.consumer.disconnect(); // Desconecta o consumidor se estiver conectado
+      console.log(`${this.topic} Disconnected`);
+      this.connected = false; // Define o estado de conexão como falso após a desconexão
+    } else {
+      console.warn('O consumidor já está desconectado.');
+    }
+  }
   async retryIfThrowsException(cb) {
     const SLEEP_DURATION = 6000;
     let tries = 0;
@@ -84,4 +98,7 @@ class KafkaConsumer {
   }
 }
 
-module.exports = KafkaConsumer;
+module.exports = {
+  KafkaConsumer,
+  MessageModel, 
+};
